@@ -55,10 +55,10 @@ python app.py
 
 ### 6. Project structure:
 
-login_auth_flask/
-│
-├── app.py                  # Main application file
-├── templates/              # HTML templates (includes: home.html, login.html, register.html, dashboard.html)
-├── requirements.txt        # List of dependencies
-└── venv/                   # Virtual environment directory (included in .gitignore)
+**login_auth_flask/**
+**│**
+**├── app.py                  # Main application file**
+**├── templates/              # HTML templates (includes: home.html, login.html, register.html, dashboard.html)**
+**├── requirements.txt        # List of dependencies**
+**└── venv/                   # Virtual environment directory (included in .gitignore)**
 
