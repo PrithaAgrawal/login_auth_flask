@@ -21,9 +21,9 @@ login_manager.login_view = "login"
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return Userdetail.query.get(int(user_id))
 
-class User(db.Model, UserMixin):
+class Userdetail(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), nullable=False, unique=True)
     email = db.Column(db.String(150), nullable=False, unique=True)
@@ -36,7 +36,7 @@ class RegisterForm(FlaskForm):
     submit = SubmitField("Register")
 
     def validate_username(self, username):
-        existing_user_username = User.query.filter_by(username=username.data).first()
+        existing_user_username = Userdetail.query.filter_by(username=username.data).first()
 
         if existing_user_username:
             raise ValidationError("That username already exists. Please choose a different one.")
@@ -57,13 +57,10 @@ def home():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user:
-            print("User found")
-        else:
-            print("User not found")
+        user = Userdetail.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user)
+            print(f"User {user.username} successfully logged in")
             return redirect(url_for('dashboard'))
         else:
             print("Invalid credentials")
@@ -73,8 +70,12 @@ def login():
 @app.route('/dashboard',methods=['GET', 'POST'])
 @login_required
 def dashboard():
-    print(f"Current user: {current_user.username}")
-    return render_template('dashboard.html')
+    try:
+        print(f"Accessing dashboard for user: {current_user.username}")
+        return render_template('dashboard.html', username=current_user.username)
+    except Exception as e:
+        print(f"Error rendering dashboard: {e}")
+        return "An error occured while loading the dashboard."
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -82,7 +83,7 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data)
-        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
+        new_user = Userdetail(username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
         print(f"New user {form.username.data} added to the database.")
@@ -91,16 +92,12 @@ def register():
 
 
 if __name__ == '__main__':
-    # Manually push the app context
-    ctx = app.app_context()
-    ctx.push()
-
-    try:
-        db.create_all()
-        print("Database tables created successfully.")
-    except Exception as e:
-        print(f"Error creating tables: {e}")
-    finally:
-        ctx.pop()
+     # Create the database tables when starting the application
+    with app.app_context():
+        try:
+            db.create_all()
+            print("Database tables created successfully.")
+        except Exception as e:
+            print(f"Error creating tables: {e}")
 
     app.run(debug=True)
